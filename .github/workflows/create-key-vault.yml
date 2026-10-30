@@ -1,0 +1,37 @@
+name: Create Azure Key Vault
+
+on:
+  workflow_dispatch:
+    inputs:
+      vault_name:
+        description: 'Globally unique Key Vault name'
+        required: true
+        default: 'kv-runner-learning-2026'
+        type: string
+
+permissions: {}
+
+jobs:
+  create-vault:
+    runs-on: [self-hosted, linux, x64, aca]
+
+    steps:
+      - name: Log in to Azure using managed identity
+        run: |
+          az login --identity \
+            --client-id "7999f9c6-5070-4431-abb0-96fd0404aed4"
+
+          az account set \
+            --subscription "7ae7c7b3-5a6a-4fef-90a8-7488276306be"
+
+      - name: Create Key Vault
+        env:
+          VAULT_NAME: ${{ inputs.vault_name }}
+        run: |
+          az keyvault create \
+            --name "$VAULT_NAME" \
+            --resource-group rg-bicep-learning \
+            --location uksouth \
+            --enable-rbac-authorization true
+
+          echo "Key Vault created successfully."
