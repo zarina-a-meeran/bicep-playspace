@@ -24,14 +24,23 @@ jobs:
           az account set \
             --subscription "7ae7c7b3-5a6a-4fef-90a8-7488276306be"
 
-      - name: Create Key Vault
+      - name: Create Key Vault if it doesn't exist
         env:
           VAULT_NAME: ${{ inputs.vault_name }}
         run: |
-          az keyvault create \
+          if az keyvault show \
             --name "$VAULT_NAME" \
             --resource-group rg-bicep-learning \
-            --location uksouth \
-            --enable-rbac-authorization true
+            >/dev/null 2>&1; then
 
-          echo "Key Vault created successfully."
+            echo "Key Vault already exists. Skipping creation."
+
+          else
+            az keyvault create \
+              --name "$VAULT_NAME" \
+              --resource-group rg-bicep-learning \
+              --location uksouth \
+              --enable-rbac-authorization true
+
+            echo "Key Vault created successfully."
+          fi

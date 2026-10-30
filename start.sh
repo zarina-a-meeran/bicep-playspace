@@ -1,12 +1,23 @@
 #!/bin/bash
 set -euo pipefail
 
-# GitHub repository
 REPO_URL="https://github.com/zarina-a-meeran/bicep-playspace"
 
-# Check that the GitHub access token is available
-if [ -z "${GITHUB_PAT:-}" ]; then
-    echo "ERROR: GITHUB_PAT environment variable is missing"
+echo "Logging in to Azure using managed identity..."
+
+az login --identity \
+    --client-id "7999f9c6-5070-4431-abb0-96fd0404aed4"
+
+echo "Retrieving GitHub PAT from Key Vault..."
+
+GITHUB_PAT=$(az keyvault secret show \
+    --vault-name kv-runner-learning-2026 \
+    --name github-pat \
+    --query value \
+    --output tsv)
+
+if [ -z "$GITHUB_PAT" ]; then
+    echo "ERROR: Could not retrieve GitHub PAT"
     exit 1
 fi
 
@@ -14,7 +25,6 @@ cd /home/runner/actions-runner
 
 echo "Requesting a runner registration token..."
 
-# Request a short-lived registration token from GitHub
 RUNNER_TOKEN=$(curl -fsSL -X POST \
     -H "Accept: application/vnd.github+json" \
     -H "Authorization: Bearer ${GITHUB_PAT}" \
